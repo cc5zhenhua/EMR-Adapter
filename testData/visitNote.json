@@ -1,0 +1,16 @@
+{
+    "carelog": "",
+    "visitId": "1234567890",
+    "patientId": "1234567890",
+    "caregiverId": "1234567890",
+    "visitDate": "2025-12-22",
+    "startTime": "10:00",
+    "endTime": "11:00",
+    "shift": "266477302",
+    "unavailability": "",
+    "date": "12/22/2025",
+    "tags": "test-tag",
+    "note": "This is a test note",
+    "show_with_billing": "on",
+    "show_with_payroll": "on"
+  }
