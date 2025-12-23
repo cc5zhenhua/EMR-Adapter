@@ -10,6 +10,13 @@
 - 🔄 **自动重试**: 智能重试机制
 - 📝 **CLI 工具**: 命令行界面，支持交互式和文件输入
 
+## 演示
+
+<video width="800" controls>
+  <source src="./Demo.mp4" type="video/mp4">
+  您的浏览器不支持视频标签。
+</video>
+
 ## 安装
 
 ```bash
@@ -43,13 +50,20 @@ yarn start login --emr wellsky --username <username> --password <password> --url
 
 ```json
 {
-  "visitId": "12345",
-  "patientId": "patient-001",
-  "caregiverId": "caregiver-001",
-  "visitDate": "2025-01-10",
-  "startTime": "09:00",
-  "endTime": "10:30",
-  "note": "患者状态良好，完成日常护理任务。"
+    "carelog": "",
+    "visitId": "1234567890",
+    "patientId": "1234567890",
+    "caregiverId": "1234567890",
+    "visitDate": "2025-12-22",
+    "startTime": "10:00",
+    "endTime": "11:00",
+    "shift": "266477302",
+    "unavailability": "",
+    "date": "12/22/2025",
+    "tags": "test-tag",
+    "note": "This is a test note",
+    "show_with_billing": "on",
+    "show_with_payroll": "on"
 }
 ```
 
