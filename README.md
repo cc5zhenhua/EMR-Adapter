@@ -10,12 +10,9 @@
 - 🔄 **自动重试**: 智能重试机制
 - 📝 **CLI 工具**: 命令行界面，支持交互式和文件输入
 
-## 演示
+## 演示视频
 
-<video width="800" controls>
-  <source src="./Demo.mp4" type="video/mp4">
-  您的浏览器不支持视频标签。
-</video>
+![Demo](./Demo.gif)
 
 ## 安装
 
