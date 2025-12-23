@@ -1,4 +1,4 @@
-// AdapterFactory - 工厂模式创建适配器
+// AdapterFactory - Factory pattern for creating adapters
 
 import { BaseAdapter } from './base-adapter.js';
 import { WellSkyAdapter } from './wellsky-adapter.js';
@@ -9,7 +9,7 @@ export class AdapterFactory {
     switch (emrType) {
       case EMRType.WellSky:
         return new WellSkyAdapter();
-      // 未来可以添加其他 EMR
+      // Future EMR adapters can be added here
       // case EMRType.AxisCare:
       //   return new AxisCareAdapter();
       // case EMRType.AlayaCare:

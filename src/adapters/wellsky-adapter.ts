@@ -1,4 +1,4 @@
-// WellSkyAdapter - WellSky EMR 的适配器实现
+// WellSkyAdapter - Adapter implementation for WellSky EMR
 
 import { BaseAdapter } from './base-adapter.js';
 import {
@@ -11,7 +11,7 @@ import {
 } from '../types/index.js';
 import type { VisitNote } from '../models/canonical.js';
 
-// WellSky 特定的请求模型（表单字段）
+// WellSky specific request model (form fields)
 export interface WellSkyVisitNoteRequest {
   carelog: string;
   shift: string;
@@ -37,11 +37,11 @@ export class WellSkyAdapter extends BaseAdapter {
     const nextUrl = '/dashboard/live/';
 
     try {
-      // 1. GET 登录页面，获取初始 cookies 和 CSRF token
+      // 1. GET login page to get initial cookies and CSRF token
       const loginPageResponse = await this.httpClient.get(`${loginUrl}/?next=${nextUrl}`);
       this.sessionManager.updateCookies(loginPageResponse.cookies || []);
 
-      // 提取 CSRF token
+      // Extract CSRF token
       const csrfToken = this.extractCSRFToken(loginPageResponse.body);
       if (!csrfToken) {
         throw new EMRAdapterError(
@@ -51,7 +51,7 @@ export class WellSkyAdapter extends BaseAdapter {
         );
       }
 
-      // 2. POST 到 /multilogin/ (AJAX 请求)
+      // 2. POST to /multilogin/ (AJAX request)
       const multiloginFormData = new URLSearchParams();
       multiloginFormData.append('csrfmiddlewaretoken', csrfToken);
       multiloginFormData.append('username', credentials.username);
@@ -69,7 +69,7 @@ export class WellSkyAdapter extends BaseAdapter {
 
       this.sessionManager.updateCookies(multiloginResponse.cookies || []);
 
-      // 验证 multilogin 响应
+      // Validate multilogin response
       if (multiloginResponse.status === 200 && typeof multiloginResponse.body === 'object') {
         const result = multiloginResponse.body as { success?: boolean; errors?: any[] };
         if (!result.success || (result.errors && result.errors.length > 0)) {
@@ -82,7 +82,7 @@ export class WellSkyAdapter extends BaseAdapter {
         }
       }
 
-      // 3. POST 到 /login/ 完成登录（带时间戳参数）
+      // 3. POST to /login/ to complete login (with timestamp parameter)
       const timestamp = Date.now() / 1000;
       const loginFormData = new URLSearchParams();
       loginFormData.append('csrfmiddlewaretoken', csrfToken);
@@ -101,11 +101,11 @@ export class WellSkyAdapter extends BaseAdapter {
 
       this.sessionManager.updateCookies(loginResponse.cookies || []);
 
-      // 4. 验证登录状态（302 重定向到 dashboard）
+      // 4. Verify login status (302 redirect to dashboard)
       if (loginResponse.status === 302) {
         const location = loginResponse.headers['location'] || '';
         if (location.includes('/dashboard') || location.includes('/live')) {
-          // 登录成功，访问 dashboard 获取完整 session
+          // Login successful, access dashboard to get complete session
           const dashboardUrl = location.startsWith('http')
             ? location
             : `${baseUrl}${location}`;
@@ -124,7 +124,7 @@ export class WellSkyAdapter extends BaseAdapter {
         }
       }
 
-      // 登录失败
+      // Login failed
       throw new EMRAdapterError(
         'WellSky authentication failed',
         ErrorType.Authentication,
@@ -145,7 +145,7 @@ export class WellSkyAdapter extends BaseAdapter {
   }
 
   transform(note: VisitNote): WellSkyVisitNoteRequest {
-    // 格式化日期为 MM/DD/YYYY
+    // Format date as MM/DD/YYYY
     const formatDate = (date: Date): string => {
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
@@ -153,7 +153,7 @@ export class WellSkyAdapter extends BaseAdapter {
       return `${month}/${day}/${year}`;
     };
 
-    // 优先使用 metadata 中的 shift，否则使用 visitId
+    // Prioritize shift from metadata, otherwise use visitId
     const shift = (note.metadata as any)?.shift || note.visitId;
 
     const request: WellSkyVisitNoteRequest = {
@@ -161,7 +161,7 @@ export class WellSkyAdapter extends BaseAdapter {
       shift: String(shift),
       unavailability: '',
       date: formatDate(note.visitDate),
-      tags: note.metadata?.tags || '38060', // 默认 tag，可从 metadata 覆盖
+      tags: note.metadata?.tags || '38060', // Default tag, can be overridden from metadata
       note: note.note,
       show_with_billing: 'on',
       show_with_payroll: 'on',
@@ -183,11 +183,11 @@ export class WellSkyAdapter extends BaseAdapter {
       const baseUrl = this.baseUrl;
       const endpoint = `${baseUrl}/scheduling/note/add/`;
 
-      // 1. 总是从 scheduling 页面获取最新的 CSRF token（表单提交需要最新的 token）
-      // 先尝试从 session 获取，如果失败再从页面获取
+      // 1. Always get the latest CSRF token from scheduling page (form submission requires latest token)
+      // First try to get from session, if failed then get from page
       let csrfToken = this.sessionManager.getTokens().csrf;
       
-      // 从 scheduling 页面获取最新的 CSRF token
+      // Get the latest CSRF token from scheduling page
       const schedulingResponse = await this.httpClient.get(`${baseUrl}/scheduling/`, {
         cookies: this.sessionManager.getCookies(),
         headers: {
@@ -196,7 +196,7 @@ export class WellSkyAdapter extends BaseAdapter {
       });
       this.sessionManager.updateCookies(schedulingResponse.cookies || []);
 
-      // 检查 session 是否有效
+      // Check if session is valid
       if (schedulingResponse.status === 403 || schedulingResponse.status === 302) {
         // 尝试访问 dashboard 验证 session
         const dashboardResponse = await this.httpClient.get(`${baseUrl}/dashboard/live/`, {
@@ -228,7 +228,7 @@ export class WellSkyAdapter extends BaseAdapter {
         }
       }
 
-      // 4. 如果仍然没有 token，抛出错误
+      // 4. If still no token, throw error
       if (!csrfToken) {
         throw new EMRAdapterError(
           'Failed to obtain CSRF token. Please try logging in again.',
@@ -237,7 +237,7 @@ export class WellSkyAdapter extends BaseAdapter {
         );
       }
 
-      // 2. 构建表单数据
+      // 2. Build form data
       const formData = this.transform(note);
       formData.csrfmiddlewaretoken = csrfToken;
 
@@ -246,7 +246,7 @@ export class WellSkyAdapter extends BaseAdapter {
         formParams.append(key, value);
       });
 
-      // 5. POST 提交表单（不访问表单页面，直接提交）
+      // 5. POST submit form (direct submission without accessing form page)
       const response = await this.httpClient.post(endpoint, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -260,7 +260,7 @@ export class WellSkyAdapter extends BaseAdapter {
 
       this.sessionManager.updateCookies(response.cookies || []);
 
-      // 6. 验证响应（表单提交通常返回页面导航）
+      // 6. Validate response (form submission usually returns page navigation)
       if (response.status >= 200 && response.status < 400) {
         const result: PostResult = {
           success: true,
@@ -272,7 +272,7 @@ export class WellSkyAdapter extends BaseAdapter {
         return result;
       }
 
-      // 403 错误，提供更详细的信息
+      // 403 error, provide more detailed information
       if (response.status === 403) {
         const bodyPreview = typeof response.body === 'string'
           ? response.body.substring(0, 500)
@@ -312,8 +312,8 @@ export class WellSkyAdapter extends BaseAdapter {
       return null;
     }
     
-    // 从 HTML 中提取 CSRF token
-    // WellSky 使用 csrfmiddlewaretoken 字段名
+    // Extract CSRF token from HTML
+    // WellSky uses csrfmiddlewaretoken field name
     const csrfMatch = html.match(
       /<input[^>]*name=["']csrfmiddlewaretoken["'][^>]*value=["']([^"']+)["']/i
     );
@@ -321,7 +321,7 @@ export class WellSkyAdapter extends BaseAdapter {
       return csrfMatch[1];
     }
 
-    // 也支持通用的 csrf_token 模式
+    // Also support generic csrf_token pattern
     const genericMatch = html.match(
       /<input[^>]*name=["']csrf[_-]?token["'][^>]*value=["']([^"']+)["']/i
     );
@@ -329,7 +329,7 @@ export class WellSkyAdapter extends BaseAdapter {
       return genericMatch[1];
     }
 
-    // 或者从 meta 标签提取
+    // Or extract from meta tag
     const metaMatch = html.match(
       /<meta[^>]*name=["']csrf[_-]?token["'][^>]*content=["']([^"']+)["']/i
     );

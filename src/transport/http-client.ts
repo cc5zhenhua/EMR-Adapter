@@ -91,7 +91,7 @@ export class HTTPClient {
         responseBody = await response.text();
       }
 
-      // 构建响应头对象
+      // Build response headers object
       const responseHeaders: Record<string, string> = {};
       response.headers.forEach((value, key) => {
         responseHeaders[key] = value;
@@ -122,4 +122,3 @@ export class HTTPClient {
     return this.request(url, { ...options, method: 'POST' });
   }
 }
-

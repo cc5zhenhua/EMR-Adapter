@@ -1,7 +1,7 @@
 // SessionManager - 管理 cookies 和会话
 
-import { writeFileSync, readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { writeFileSync, readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import type { Session } from '../types/index.js';
 
 export class SessionManager {

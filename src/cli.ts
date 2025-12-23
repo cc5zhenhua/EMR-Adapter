@@ -4,8 +4,8 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import { EMRType, type Credentials, type Session, type VisitNote } from './index.js';
 import { AuthenticationService } from './services/authentication-service.js';
 import { VisitNoteService } from './services/visit-note-service.js';
@@ -25,7 +25,7 @@ const loginCommand = program
   .requiredOption('-e, --emr <type>', `EMR 类型 (可选值: ${Object.values(EMRType).join(', ')})`, (value) => {
     const emrType = value.toLowerCase();
     if (!Object.values(EMRType).includes(emrType as EMRType)) {
-      throw new Error(`不支持的 EMR 类型: ${value}. 支持的类型: ${Object.values(EMRType).join(', ')}`);
+      throw new Error(`Unsupported EMR type: ${value}. Supported types: ${Object.values(EMRType).join(', ')}`);
     }
     return emrType as EMRType;
   })
@@ -37,19 +37,19 @@ loginCommand.action(async (options: any) => {
     try {
       let { username, password } = options;
 
-      // 如果未提供用户名或密码，交互式输入
+      // If username or password not provided, interactive input
       if (!username || !password) {
         const answers = await inquirer.prompt([
           {
             type: 'input',
             name: 'username',
-            message: '请输入用户名:',
+            message: 'Please enter username:',
             when: !username,
           },
           {
             type: 'password',
             name: 'password',
-            message: '请输入密码:',
+            message: 'Please enter password:',
             when: !password,
           },
         ]);
@@ -73,13 +73,13 @@ loginCommand.action(async (options: any) => {
       const authService = new AuthenticationService(options.emr);
       const session = await authService.authenticate(credentials);
 
-      console.log(chalk.green('✓ 登录成功!'));
-      console.log(chalk.gray(`Session cookies: ${session.cookies.length} 个`));
+      console.log(chalk.green('✓ Login successful!'));
+      console.log(chalk.gray(`Session cookies: ${session.cookies.length} items`));
       if (session.tokens && Object.keys(session.tokens).length > 0) {
         console.log(chalk.gray(`Tokens: ${Object.keys(session.tokens).join(', ')}`));
       }
 
-      // 保存 session 到文件
+      // Save session to file
       const sessionPath = getSessionFilePath(options.emr);
       try {
         const sessionData = {
@@ -87,12 +87,12 @@ loginCommand.action(async (options: any) => {
           expiresAt: session.expiresAt?.toISOString(),
         };
         writeFileSync(sessionPath, JSON.stringify(sessionData, null, 2), 'utf-8');
-        console.log(chalk.gray(`Session 已保存到: ${sessionPath}`));
+        console.log(chalk.gray(`Session saved to: ${sessionPath}`));
       } catch (error: any) {
-        console.warn(chalk.yellow(`警告: 无法保存 session: ${error.message}`));
+        console.warn(chalk.yellow(`Warning: Unable to save session: ${error.message}`));
       }
 
-      // 输出结构化 JSON（用于调试）
+      // Output structured JSON (for debugging)
       if (process.env.DEBUG) {
         console.log(JSON.stringify({
           success: true,
@@ -104,7 +104,7 @@ loginCommand.action(async (options: any) => {
         }, null, 2));
       }
     } catch (error: any) {
-      console.error(chalk.red('✗ 登录失败:'), error.message);
+      console.error(chalk.red('✗ Login failed:'), error.message);
       if (process.env.DEBUG) {
         console.error(error);
       }
@@ -112,14 +112,14 @@ loginCommand.action(async (options: any) => {
     }
   });
 
-// 发布 visit note 命令
+// Post visit note command
 const postNoteCommand = program
   .command('post-note')
-  .description('发布 visit note 到指定的 EMR 系统')
+  .description('Post visit note to the specified EMR system')
   .requiredOption('-e, --emr <type>', `EMR 类型 (可选值: ${Object.values(EMRType).join(', ')})`, (value) => {
     const emrType = value.toLowerCase();
     if (!Object.values(EMRType).includes(emrType as EMRType)) {
-      throw new Error(`不支持的 EMR 类型: ${value}. 支持的类型: ${Object.values(EMRType).join(', ')}`);
+      throw new Error(`Unsupported EMR type: ${value}. Supported types: ${Object.values(EMRType).join(', ')}`);
     }
     return emrType as EMRType;
   })
@@ -147,19 +147,19 @@ postNoteCommand.action(async (options: any) => {
             type: 'input',
             name: 'visitId',
             message: 'Visit ID:',
-            validate: (input) => !!input || 'Visit ID 是必需的',
+            validate: (input) => !!input || 'Visit ID is required',
           },
           {
             type: 'input',
             name: 'patientId',
             message: 'Patient ID:',
-            validate: (input) => !!input || 'Patient ID 是必需的',
+            validate: (input) => !!input || 'Patient ID is required',
           },
           {
             type: 'input',
             name: 'caregiverId',
             message: 'Caregiver ID:',
-            validate: (input) => !!input || 'Caregiver ID 是必需的',
+            validate: (input) => !!input || 'Caregiver ID is required',
           },
           {
             type: 'input',
@@ -167,9 +167,9 @@ postNoteCommand.action(async (options: any) => {
             message: 'Visit Date (YYYY-MM-DD):',
             default: new Date().toISOString().split('T')[0],
             validate: (input) => {
-              const date = new Date(input);
-              return !isNaN(date.getTime()) || '无效的日期格式';
-            },
+          const date = new Date(input);
+          return !isNaN(date.getTime()) || 'Invalid date format';
+        },
           },
           {
             type: 'input',
@@ -185,7 +185,7 @@ postNoteCommand.action(async (options: any) => {
             type: 'input',
             name: 'note',
             message: 'Note Content:',
-            validate: (input) => !!input || 'Note 内容是必需的',
+            validate: (input) => !!input || 'Note content is required',
           },
         ]);
 

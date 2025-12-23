@@ -1,4 +1,4 @@
-// BaseAdapter - 抽象基类，定义所有 EMR Adapter 的通用接口
+// BaseAdapter - Abstract base class defining common interfaces for all EMR Adapters
 
 import {
   type Credentials,
@@ -28,15 +28,15 @@ export abstract class BaseAdapter {
     });
   }
 
-  // 抽象方法 - 必须由子类实现
+  // Abstract methods - must be implemented by subclasses
   abstract authenticate(credentials: Credentials): Promise<Session>;
   abstract postVisitNote(note: VisitNote): Promise<PostResult>;
   abstract transform(note: VisitNote): any;
 
-  // 通用方法 - 可在基类中实现
+  // Common methods - can be implemented in the base class
   protected async handleRetry<T>(fn: () => Promise<T>): Promise<T> {
     return this.retryHandler.execute(fn, (error: any) => {
-      // 默认重试策略：网络错误和 5xx 错误可重试
+      // Default retry strategy: network errors and 5xx errors are retryable
       if (RetryHandler.isNetworkError(error)) {
         return true;
       }
